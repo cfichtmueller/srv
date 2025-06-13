@@ -525,6 +525,9 @@ func (c *Context) BindJSON(data any) *Response {
 	v, ok := data.(Validatable)
 	if ok {
 		if err := v.Validate(); err != nil {
+			if v, ok := err.(*ValidationError); ok {
+				return Respond().BadRequest(v)
+			}
 			return respondError(http.StatusBadRequest, "BadRequest", err.Error())
 		}
 	}

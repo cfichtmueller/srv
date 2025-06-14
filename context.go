@@ -91,7 +91,7 @@ func (c *Context) Request() *http.Request {
 	return c.r
 }
 
-// ClientIP returns the client IP address from the request.s
+// ClientIP returns the client IP address from the request.
 func (c *Context) ClientIP() string {
 	if !c.ipResolved {
 		c.ipAddresses = c.conf.ipResolver.Resolve(c.r)

@@ -91,7 +91,9 @@ func (c *Context) Request() *http.Request {
 	return c.r
 }
 
-// ClientIP returns the client IP address from the request.
+// ClientIP returns the client IP address from the request. When proxies are trusted,
+// the address is resolved from proxy headers like X-Forwarded-For. Otherwise, the
+// direct remote address is used.
 func (c *Context) ClientIP() string {
 	if !c.ipResolved {
 		c.ipAddresses = c.conf.ipResolver.Resolve(c.r)

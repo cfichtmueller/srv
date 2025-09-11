@@ -5,6 +5,7 @@
 package srv
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -83,6 +84,21 @@ func NewContext(w http.ResponseWriter, r *http.Request, conf *contextConfig) *Co
 		r:      r,
 		values: make(map[string]any),
 		conf:   conf,
+	}
+}
+
+// WithContext returns a copy of c with its request context replaced by the given context.
+func (c *Context) WithContext(ctx context.Context) *Context {
+	return &Context{
+		conf:        c.conf,
+		w:           c.w,
+		r:           c.r.WithContext(ctx),
+		queryParsed: c.queryParsed,
+		query:       c.query,
+		formCache:   c.formCache,
+		values:      c.values,
+		ipResolved:  c.ipResolved,
+		ipAddresses: c.ipAddresses,
 	}
 }
 

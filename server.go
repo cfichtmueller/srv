@@ -187,13 +187,14 @@ func wrap(conf *contextConfig, middleware []Middleware, handler Handler) func(ht
 }
 
 func wrapMiddleware(middleware []Middleware, handler Handler) Handler {
+	mw := middleware[0]
 	if len(middleware) == 1 {
 		return func(c *Context) *Response {
-			return middleware[0](c, handler)
+			return mw(c, handler)
 		}
 	}
 	remaining := wrapMiddleware(middleware[1:], handler)
 	return func(c *Context) *Response {
-		return middleware[0](c, remaining)
+		return mw(c, remaining)
 	}
 }

@@ -67,6 +67,13 @@ func (s *Server) Use(middleware ...Middleware) *Server {
 	return s
 }
 
+// HandleFunc adds a raw http.HandlerFunc to the Server.
+// It is useful for handling requests that don't fit into the standard routing patterns.
+// Note that no middleware is applied to the handler.
+func (s *Server) HandleFunc(pattern string, handler http.HandlerFunc) {
+	s.mux.HandleFunc(pattern, handler)
+}
+
 // OPTIONS adds a new route for the OPTIONS method with the given path, handler, and middleware.
 func (s *Server) OPTIONS(path string, handler Handler, middleware ...Middleware) {
 	s.handleMethod("OPTIONS", path, handler, middleware)

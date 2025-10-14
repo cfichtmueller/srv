@@ -109,12 +109,21 @@ func (s *Server) PATCH(path string, handler Handler, middleware ...Middleware) {
 	s.handleMethod("PATCH", path, handler, middleware)
 }
 
+// ANY adds a new route for all methods with the given path, handler, and middleware.
+func (s *Server) ANY(path string, handler Handler, middleware ...Middleware) {
+	s.handleMethod("", path, handler, middleware)
+}
+
 // handleMethod adds a new route for the given method, path, handler, and middleware.
 func (s *Server) handleMethod(method, path string, handler Handler, middleware []Middleware) {
 	if path == "" {
 		path = "/"
 	}
-	pattern := method + " " + path
+	prefix := method
+	if method != "" {
+		prefix = method + " "
+	}
+	pattern := prefix + path
 	s.mux.HandleFunc(pattern, wrap(s.contextConfig, append(s.middleware, middleware...), handler))
 }
 
@@ -179,9 +188,18 @@ func (g *Group) PATCH(path string, handler Handler, middleware ...Middleware) {
 	g.handleMethod("PATCH", path, handler, middleware)
 }
 
+// ANY adds a new route for all methods with the given path, handler, and middleware.
+func (g *Group) ANY(path string, handler Handler, middleware ...Middleware) {
+	g.handleMethod("", path, handler, middleware)
+}
+
 // handleMethod adds a new route for the given method, path, handler, and middleware.
 func (g *Group) handleMethod(method, path string, handler Handler, middleware []Middleware) {
-	g.mux.HandleFunc(method+" "+g.basePath+path, wrap(g.contextConfig, append(g.middleware, middleware...), handler))
+	prefix := ""
+	if method != "" {
+		prefix = method + " "
+	}
+	g.mux.HandleFunc(prefix+g.basePath+path, wrap(g.contextConfig, append(g.middleware, middleware...), handler))
 }
 
 func wrap(conf *contextConfig, middleware []Middleware, handler Handler) func(http.ResponseWriter, *http.Request) {

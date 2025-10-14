@@ -104,6 +104,11 @@ func (s *Server) DELETE(path string, handler Handler, middleware ...Middleware) 
 	s.handleMethod("DELETE", path, handler, middleware)
 }
 
+// PATCH adds a new route for the PATCH method with the given path, handler, and middleware.
+func (s *Server) PATCH(path string, handler Handler, middleware ...Middleware) {
+	s.handleMethod("PATCH", path, handler, middleware)
+}
+
 // handleMethod adds a new route for the given method, path, handler, and middleware.
 func (s *Server) handleMethod(method, path string, handler Handler, middleware []Middleware) {
 	if path == "" {
@@ -167,6 +172,11 @@ func (g *Group) PUT(path string, handler Handler, middleware ...Middleware) {
 // DELETE adds a new route for the DELETE method with the given path, handler, and middleware.
 func (g *Group) DELETE(path string, handler Handler, middleware ...Middleware) {
 	g.handleMethod("DELETE", path, handler, middleware)
+}
+
+// PATCH adds a new route for the PATCH method with the given path, handler, and middleware.
+func (g *Group) PATCH(path string, handler Handler, middleware ...Middleware) {
+	g.handleMethod("PATCH", path, handler, middleware)
 }
 
 // handleMethod adds a new route for the given method, path, handler, and middleware.

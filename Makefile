@@ -1,7 +1,7 @@
 # Makefile for srv Go library
 
 # Variables
-GO_VERSION := 1.22.0
+GO_VERSION := 1.23.0
 MODULE_NAME := github.com/cfichtmueller/srv
 BUILD_DIR := build
 

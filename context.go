@@ -528,6 +528,24 @@ func (c *Context) ConditionalIfModifiedSince(lastModified ...time.Time) *Respons
 	return Respond().NotModified().LastModified(lm)
 }
 
+func (c *Context) ConditionalIfUnmodifiedSince(lastModified ...time.Time) *Response {
+	t, ok, err := c.IfUnmodifiedSince()
+	if err != nil {
+		return Respond().BadRequest(ErrorDto{
+			Code:    "BadRequest",
+			Message: "invalid value for 'If-Unmodified-Since'",
+		})
+	}
+	if !ok {
+		return nil
+	}
+	lm := maxTime(lastModified).Truncate(time.Second)
+	if lm.After(t) {
+		return Respond().PreconditionFailed()
+	}
+	return nil
+}
+
 // BindJSON tries to bind a json payload. Returns a response if the binding was unsuccessful
 func (c *Context) BindJSON(data any) *Response {
 	b, err := io.ReadAll(c.r.Body)

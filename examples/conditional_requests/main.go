@@ -66,6 +66,9 @@ func main() {
 				if res := c.ConditionalIfMatch(user.ETag); res != nil {
 					return res
 				}
+				if res := c.ConditionalIfUnmodifiedSince(user.UpdatedAt); res != nil {
+					return res
+				}
 				return srv.Respond().Json(user).LastModified(user.UpdatedAt).ETag(user.ETag)
 			}
 		}
@@ -78,20 +81,20 @@ func main() {
 }
 
 func init() {
-	now := time.Now()
+	base := time.Date(2025, 1, 1, 12, 0, 0, 0, time.UTC)
 	users = append(users, &User{
 		ID:        "john",
 		Name:      "John Doe",
-		CreatedAt: now.Add(-2 * time.Hour),
-		UpdatedAt: now.Add(-1 * time.Hour),
-		ETag:      strconv.FormatInt(now.UnixMilli(), 10),
+		CreatedAt: base.Add(-2 * time.Hour),
+		UpdatedAt: base.Add(-1 * time.Hour),
+		ETag:      strconv.FormatInt(base.UnixMilli(), 10),
 	})
 
 	users = append(users, &User{
 		ID:        "jane",
 		Name:      "Jane Doe",
-		CreatedAt: now.Add(-4 * time.Hour),
-		UpdatedAt: now.Add(-3 * time.Hour),
-		ETag:      strconv.FormatInt(now.UnixMilli(), 10),
+		CreatedAt: base.Add(-4 * time.Hour),
+		UpdatedAt: base.Add(-3 * time.Hour),
+		ETag:      strconv.FormatInt(base.UnixMilli(), 10),
 	})
 }

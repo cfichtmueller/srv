@@ -153,6 +153,7 @@ func (c *Context) IntQuery(key string) (int, *Response) {
 	return c.IntQueryOrDefault(key, 0)
 }
 
+// IntQueryOrDefault returns the value of the specified query parameter from the request or the default value if the parameter is not present.
 func (c *Context) IntQueryOrDefault(key string, defaultValue int) (int, *Response) {
 	val := c.Query(key)
 	if val == "" {
@@ -168,10 +169,12 @@ func (c *Context) IntQueryOrDefault(key string, defaultValue int) (int, *Respons
 	return i, nil
 }
 
+// StringQuery returns the value of the specified query parameter from the request.
 func (c *Context) StringQuery(key string) (string, *Response) {
 	return c.StringQueryOrDefault(key, "")
 }
 
+// StringQueryOrDefault returns the value of the specified query parameter from the request or the default value if the parameter is not present.
 func (c *Context) StringQueryOrDefault(key string, defaultValue string) (string, *Response) {
 	val := c.Query(key)
 	if val == "" {
@@ -528,6 +531,7 @@ func (c *Context) ConditionalIfModifiedSince(lastModified ...time.Time) *Respons
 	return Respond().NotModified().LastModified(lm)
 }
 
+// ConditionalIfUnmodifiedSince makes the request conditional. Returns a response when the precondition fails.
 func (c *Context) ConditionalIfUnmodifiedSince(lastModified ...time.Time) *Response {
 	t, ok, err := c.IfUnmodifiedSince()
 	if err != nil {
@@ -637,15 +641,18 @@ func (c *Context) GetRawData() ([]byte, error) {
 	return io.ReadAll(c.r.Body)
 }
 
+// Set sets the value of the given key in the context.
 func (c *Context) Set(key string, value any) {
 	c.values[key] = value
 }
 
+// Get returns the value of the given key in the context.
 func (c *Context) Get(key string) (any, bool) {
 	v, ok := c.values[key]
 	return v, ok
 }
 
+// MustGet panics if the key is not found in the context.
 func (c *Context) MustGet(key string) any {
 	v, ok := c.values[key]
 	if !ok {
@@ -654,18 +661,22 @@ func (c *Context) MustGet(key string) any {
 	return v
 }
 
+// Deadline invokes Deadline on the underlying request context.
 func (c *Context) Deadline() (time.Time, bool) {
 	return c.r.Context().Deadline()
 }
 
+// Done invokes Done on the underlying request context.
 func (c *Context) Done() <-chan struct{} {
 	return c.r.Context().Done()
 }
 
+// Err invokes Err on the underlying request context.
 func (c *Context) Err() error {
 	return c.r.Context().Err()
 }
 
+// Value invokes Value on the underlying request context.
 func (c *Context) Value(key any) any {
 	return c.r.Context().Value(key)
 }

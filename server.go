@@ -213,7 +213,7 @@ func wrap(conf *contextConfig, middleware []Middleware, handler Handler) func(ht
 			panic("received nil response from handler")
 		}
 		if r.Method == "HEAD" {
-			return
+			res.omitBody = true
 		}
 		if err := res.Write(w); err != nil {
 			slog.Error("unable to write response", "error", err.Error())

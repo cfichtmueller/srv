@@ -42,6 +42,7 @@ type Response struct {
 	jsonBody   any
 	rawBody    []byte
 	afterWrite []func()
+	omitBody   bool
 }
 
 // Respond creates a new Response with default status code 200 OK and empty headers.
@@ -675,20 +676,26 @@ func (r *Response) Write(w http.ResponseWriter) error {
 		http.SetCookie(w, cookie)
 	}
 
-	body := r.rawBody
-	if r.jsonBody != nil {
-		b, err := json.Marshal(r.jsonBody)
-		if err != nil {
-			return err
+	var body []byte
+	if r.bodyFn == nil {
+		body = r.rawBody
+		if r.jsonBody != nil {
+			b, err := json.Marshal(r.jsonBody)
+			if err != nil {
+				return err
+			}
+			body = b
 		}
-		body = b
+		r.ContentLength(int64(len(body)))
 	}
 	w.WriteHeader(r.StatusCode)
-	if r.bodyFn != nil {
-		return r.bodyFn(w)
-	}
-	if _, err := w.Write(body); err != nil {
-		return err
+	if !r.omitBody {
+		if r.bodyFn != nil {
+			return r.bodyFn(w)
+		}
+		if _, err := w.Write(body); err != nil {
+			return err
+		}
 	}
 
 	return nil

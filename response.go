@@ -341,6 +341,8 @@ func (r *Response) TimingAllowOrigin(origin string) *Response {
 }
 
 // ContentDisposition sets the "Content-Disposition" header in the response.
+//
+// Use srv.ContentDispositionAttachment and srv.ContentDispositionInline to create the appropriate values.
 func (r *Response) ContentDisposition(disposition string) *Response {
 	r.headers.Set("Content-Disposition", disposition)
 	return r

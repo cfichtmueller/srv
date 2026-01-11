@@ -568,26 +568,40 @@ func (c *Context) BindJSON(data any) *Response {
 
 // BindJson tries to bind a json payload. Returns a response if the binding was unsuccessful
 func (c *Context) BindJson(data any) *Response {
-	b, err := io.ReadAll(c.r.Body)
-	if err != nil {
-		return respondInternalServerError(err)
+	ok, res := c.BindJsonOptional(data)
+	if res != nil {
+		return res
 	}
-	if len(b) == 0 {
+	if !ok {
 		return respondError(http.StatusBadRequest, "RequestBodyMissing", "request body is missing")
 	}
+	return nil
+}
+
+// BindJsonOptional tries to bind a json payload. Returns a response if the binding was unsuccessful.
+// If the request body is empty, it returns false and nil.
+// If the request body is not empty, it returns true and nil if the binding was successful.
+func (c *Context) BindJsonOptional(data any) (bool, *Response) {
+	b, err := io.ReadAll(c.r.Body)
+	if err != nil {
+		return false, respondInternalServerError(err)
+	}
+	if len(b) == 0 {
+		return false, nil
+	}
 	if err := json.Unmarshal(b, data); err != nil {
-		return respondError(http.StatusBadRequest, "InvalidRequestBody", err.Error())
+		return false, respondError(http.StatusBadRequest, "InvalidRequestBody", err.Error())
 	}
 	v, ok := data.(Validatable)
 	if ok {
 		if err := v.Validate(); err != nil {
 			if v, ok := err.(*ValidationError); ok {
-				return Respond().BadRequest(v)
+				return false, Respond().BadRequest(v)
 			}
-			return respondError(http.StatusBadRequest, "BadRequest", err.Error())
+			return false, respondError(http.StatusBadRequest, "BadRequest", err.Error())
 		}
 	}
-	return nil
+	return true, nil
 }
 
 // FormValues returns the values from a POST urlencoded form or multipart form

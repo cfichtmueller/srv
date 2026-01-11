@@ -137,7 +137,7 @@ type User struct {
 
 func createUser(c *srv.Context) *srv.Response {
     var user User
-    if res := c.BindJSON(&user); res != nil {
+    if res := c.BindJson(&user); res != nil {
         return res // Returns validation error response
     }
     return srv.Respond().Created(user)

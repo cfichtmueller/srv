@@ -560,7 +560,14 @@ func (c *Context) ConditionalIfUnmodifiedSince(lastModified ...time.Time) *Respo
 }
 
 // BindJSON tries to bind a json payload. Returns a response if the binding was unsuccessful
+//
+// Deprecated: Use BindJson instead.
 func (c *Context) BindJSON(data any) *Response {
+	return c.BindJson(data)
+}
+
+// BindJson tries to bind a json payload. Returns a response if the binding was unsuccessful
+func (c *Context) BindJson(data any) *Response {
 	b, err := io.ReadAll(c.r.Body)
 	if err != nil {
 		return respondInternalServerError(err)

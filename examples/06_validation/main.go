@@ -27,9 +27,9 @@ func main() {
 		var req Request
 		// Bind the request body to req
 		// If request implements Validate() error - the validation will be invoked
-		// if BindJSON returns a response, return it
-		// if BindJSON doesn't return a response, the binding was successful
-		if res := c.BindJSON(&req); res != nil {
+		// if BindJson returns a response, return it
+		// if BindJson doesn't return a response, the binding was successful
+		if res := c.BindJson(&req); res != nil {
 			return res
 		}
 		return srv.Respond().Json(req)

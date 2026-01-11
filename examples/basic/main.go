@@ -61,7 +61,7 @@ func main() {
 
 	s.POST("/users", func(c *srv.Context) *srv.Response {
 		var req CreateUserRequest
-		if res := c.BindJSON(&req); res != nil {
+		if res := c.BindJson(&req); res != nil {
 			return res
 		}
 		id := fmt.Sprintf("user-%d", time.Now().UnixMilli())

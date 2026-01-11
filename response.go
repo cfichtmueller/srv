@@ -654,10 +654,19 @@ func (r *Response) Body(contentType string, data []byte) *Response {
 	return r
 }
 
+// BodyFn creates the response body from a function.
 func (r *Response) BodyFn(contentType string, bodyFn BodyFn) *Response {
 	r.bodyFn = bodyFn
 	r.headers.Set("Content-Type", contentType)
 	return r
+}
+
+// BodyReader creates the response body from a reader.
+func (r *Response) BodyReader(contentType string, reader io.Reader) *Response {
+	return r.BodyFn(contentType, func(w io.Writer) error {
+		_, err := io.Copy(w, reader)
+		return err
+	})
 }
 
 // Write writes the response to the http.ResponseWriter.

@@ -148,6 +148,15 @@ func (c *Context) Query(key string) string {
 	return c.query.Get(key)
 }
 
+// QueryArray returns the values of the specified query parameter from the request.
+func (c *Context) QueryArray(key string) (values []string, ok bool) {
+	if !c.queryParsed {
+		c.query = c.r.URL.Query()
+	}
+	values, ok = c.query[key]
+	return values, ok
+}
+
 // IntQuery is a shortcut for IntQueryOrDefault(key, 0)
 func (c *Context) IntQuery(key string) (int, *Response) {
 	return c.IntQueryOrDefault(key, 0)

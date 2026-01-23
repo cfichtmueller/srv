@@ -1,0 +1,78 @@
+:root {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+.bg-black {
+    background-color: #000000;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.font-bold {
+    font-weight: bold;
+}
+
+.gap-4 {
+    gap: 1rem;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.max-w-xl {
+    max-width: 768px;
+}
+
+.min-h-screen {
+    min-height: 100vh;
+}
+
+.overflow-x-auto {
+    overflow-x: auto;
+}
+
+.pt-4 {
+    padding-top: 1rem;
+}
+
+.text-2xl {
+    font-size: 2rem;
+}
+
+.text-4xl {
+    font-size: 4rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-gray-100 {
+    color: #fafafa;
+}
+
+.title {
+    font-size: 4rem;
+    font-weight: bold;
+}
+
+.w-full {
+    width: 100%;
+}

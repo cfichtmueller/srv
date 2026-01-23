@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SPA - Dynamic</title>
+  <link rel="stylesheet" href="/assets/main.css" />
+</head>
+
+<body>
+  <div class="flex flex-col items-center justify-center min-h-screen bg-black">
+    <h1 class="w-full text-4xl font-bold text-center text-gray-100">{{ .Time }}</h1>
+    <div class="flex flex-col pt-4 text-gray-100">
+      <div class="text-2xl text-center text-gray-100">Request Headers</div>
+      <dl>
+        {{range .Headers}}
+        <dt class="text-gray-100 max-w-xl overflow-x-auto">{{ .Name}}</dt>
+        <dd class="text-gray-100 max-w-xl overflow-x-auto">{{ .Value }}</dd>
+        {{ end }}
+        </ul>
+    </div>
+  </div>
+</body>
+
+</html>

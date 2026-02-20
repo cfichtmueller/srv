@@ -56,7 +56,7 @@ func (s *Server) Group(path string, middleware ...Middleware) *Group {
 	return &Group{
 		basePath:      path,
 		mux:           s.mux,
-		middleware:    append(s.middleware[:], middleware...),
+		middleware:    mergeMiddlewares(s.middleware, middleware),
 		contextConfig: s.contextConfig,
 	}
 }
@@ -130,7 +130,7 @@ func (s *Server) handleMethod(method, path string, handler Handler, middleware [
 		prefix = method + " "
 	}
 	pattern := prefix + path
-	s.mux.HandleFunc(pattern, wrap(s.contextConfig, append(s.middleware, middleware...), handler))
+	s.mux.HandleFunc(pattern, wrap(s.contextConfig, mergeMiddlewares(s.middleware, middleware), handler))
 }
 
 // ListenAndServe starts the server and listens for incoming requests on the given address.
@@ -152,7 +152,7 @@ type Group struct {
 // Group creates a new Group with the given path.
 func (g *Group) Group(path string, middleware ...Middleware) *Group {
 	return &Group{
-		middleware:    append(g.middleware[:], middleware...),
+		middleware:    mergeMiddlewares(g.middleware, middleware),
 		basePath:      g.basePath + path,
 		mux:           g.mux,
 		contextConfig: g.contextConfig,
@@ -205,7 +205,7 @@ func (g *Group) handleMethod(method, path string, handler Handler, middleware []
 	if method != "" {
 		prefix = method + " "
 	}
-	g.mux.HandleFunc(prefix+g.basePath+path, wrap(g.contextConfig, append(g.middleware, middleware...), handler))
+	g.mux.HandleFunc(prefix+g.basePath+path, wrap(g.contextConfig, mergeMiddlewares(g.middleware, middleware), handler))
 }
 
 func wrap(conf *contextConfig, middleware []Middleware, handler Handler) func(http.ResponseWriter, *http.Request) {
@@ -238,4 +238,11 @@ func wrapMiddleware(middleware []Middleware, handler Handler) Handler {
 	return func(c *Context) *Response {
 		return mw(c, remaining)
 	}
+}
+
+func mergeMiddlewares(mw1, mw2 []Middleware) []Middleware {
+	nm := make([]Middleware, 0, len(mw1)+len(mw2))
+	nm = append(nm, mw1...)
+	nm = append(nm, mw2...)
+	return nm
 }

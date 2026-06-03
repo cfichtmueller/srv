@@ -189,14 +189,7 @@ func (c *Context) StringQueryOrDefault(key string, defaultValue string) (string,
 	if val == "" {
 		return defaultValue, nil
 	}
-	s, err := url.QueryUnescape(val)
-	if err != nil {
-		return "", Respond().BadRequest(ErrorDto{
-			Code:    "BadRequest",
-			Message: "invalid value for '" + key + "'",
-		})
-	}
-	return s, nil
+	return val, nil
 }
 
 // Header returns the value of the specified header from the request.

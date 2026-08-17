@@ -678,15 +678,6 @@ func (r *Response) Write(w http.ResponseWriter) error {
 		}
 	}()
 
-	for k, vals := range r.headers {
-		for _, val := range vals {
-			w.Header().Add(k, val)
-		}
-	}
-	for _, cookie := range r.cookies {
-		http.SetCookie(w, cookie)
-	}
-
 	var body []byte
 	if r.bodyFn == nil {
 		body = r.rawBody
@@ -699,6 +690,16 @@ func (r *Response) Write(w http.ResponseWriter) error {
 		}
 		r.ContentLength(int64(len(body)))
 	}
+
+	for k, vals := range r.headers {
+		for _, val := range vals {
+			w.Header().Add(k, val)
+		}
+	}
+	for _, cookie := range r.cookies {
+		http.SetCookie(w, cookie)
+	}
+
 	w.WriteHeader(r.StatusCode)
 	if !r.omitBody {
 		if r.bodyFn != nil {

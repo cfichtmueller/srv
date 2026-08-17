@@ -153,7 +153,7 @@ type Group struct {
 func (g *Group) Group(path string, middleware ...Middleware) *Group {
 	return &Group{
 		middleware:    mergeMiddlewares(g.middleware, middleware),
-		basePath:      g.basePath + path,
+		basePath:      joinPath(g.basePath, path),
 		mux:           g.mux,
 		contextConfig: g.contextConfig,
 	}
@@ -205,7 +205,7 @@ func (g *Group) handleMethod(method, path string, handler Handler, middleware []
 	if method != "" {
 		prefix = method + " "
 	}
-	g.mux.HandleFunc(prefix+g.basePath+path, wrap(g.contextConfig, mergeMiddlewares(g.middleware, middleware), handler))
+	g.mux.HandleFunc(prefix+joinPath(g.basePath, path), wrap(g.contextConfig, mergeMiddlewares(g.middleware, middleware), handler))
 }
 
 func wrap(conf *contextConfig, middleware []Middleware, handler Handler) func(http.ResponseWriter, *http.Request) {
@@ -238,6 +238,15 @@ func wrapMiddleware(middleware []Middleware, handler Handler) Handler {
 	return func(c *Context) *Response {
 		return mw(c, remaining)
 	}
+}
+
+// joinPath joins a group base path with a sub path
+func joinPath(base, sub string) string {
+	if len(base) > 0 && base[len(base)-1] == '/' &&
+		len(sub) > 0 && sub[0] == '/' {
+		return base + sub[1:]
+	}
+	return base + sub
 }
 
 func mergeMiddlewares(mw1, mw2 []Middleware) []Middleware {

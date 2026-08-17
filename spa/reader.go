@@ -23,6 +23,7 @@ func (r *FsReader) Read(filename string) (b []byte, ok bool, err error) {
 			return nil, false, nil
 		}
 	}
+	defer f.Close()
 	stat, err := f.Stat()
 	if err != nil {
 		return nil, false, err

@@ -171,7 +171,7 @@ func (r *Response) Header(key, value string) *Response {
 }
 
 // WwwAuthenticate sets the "WWW-Authenticate" header in the response.
-func (r *Response) WwwHauthenticate(challenge string) *Response {
+func (r *Response) WwwAuthenticate(challenge string) *Response {
 	r.headers.Set("WWW-Authenticate", challenge)
 	return r
 }

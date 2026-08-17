@@ -136,6 +136,7 @@ func (c *Context) PathValue(name string) string {
 func (c *Context) HasQuery(key string) bool {
 	if !c.queryParsed {
 		c.query = c.r.URL.Query()
+		c.queryParsed = true
 	}
 	return c.query.Has(key)
 }

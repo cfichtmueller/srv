@@ -285,25 +285,29 @@ data, err := c.GetRawData()
 
 `c.ResponseController()` returns an `*http.ResponseController` for the underlying
 connection, exposing `SetReadDeadline`, `SetWriteDeadline`, `Flush`, and `Hijack`
-without handing out the raw `http.ResponseWriter`:
-
-```go
-// Read-side stall timeout: reset the deadline every time bytes arrive, so a
-// large-but-progressing upload is fine while a stalled connection is aborted.
-func ReadStallTimeout(d time.Duration) srv.Middleware {
-    return func(c *srv.Context, next srv.Handler) *srv.Response {
-        rc := c.ResponseController()
-        c.Request().Body = &stallReader{r: c.Request().Body, rc: rc, d: d}
-        return next(c)
-    }
-}
-```
+without handing out the raw `http.ResponseWriter`.
 
 The raw writer is intentionally not exposed — handlers must always return a
 `*srv.Response` and never write to the writer directly. `ResponseController()`
 gives the deadline/flush controls needed for streaming without breaking that rule.
 On writers that don't support a control (e.g. test recorders), the corresponding
 call returns `http.ErrNotSupported`.
+
+### Stall (Idle) Timeouts for Streaming
+
+For streaming uploads, use `srv.ReadStallTimeout(d)`. It resets the read deadline
+every time bytes arrive, so a large-but-progressing upload keeps going while a
+stalled or dead connection is aborted after `d`. Unlike a total `ReadTimeout`, it
+never penalizes an honest large transfer:
+
+```go
+// Abort an upload that makes no progress for 60s; a slow honest upload is fine.
+s.POST("/objects/{key}", uploadHandler, srv.ReadStallTimeout(60*time.Second))
+```
+
+Apply it per route or group (streaming-read routes), not globally. A non-positive
+duration disables it. It is built on `ResponseController()`, so on connections that
+don't support read deadlines it degrades to a no-op.
 
 ## Server Configuration
 

@@ -13,6 +13,18 @@ import (
 
 const (
 	DefaultMaxMultipartMemory = 64 << 20
+
+	// DefaultReadHeaderTimeout is the ReadHeaderTimeout applied to the internal
+	// *http.Server by NewServer. It bounds how long a client may take to send
+	// request headers, protecting against slowloris-style attacks without
+	// affecting streaming request or response bodies. Override with
+	// SetReadHeaderTimeout (0 disables it).
+	DefaultReadHeaderTimeout = 15 * time.Second
+
+	// DefaultIdleTimeout is the IdleTimeout applied to the internal *http.Server
+	// by NewServer. It bounds how long an idle keep-alive connection is kept
+	// open between requests. Override with SetIdleTimeout (0 disables it).
+	DefaultIdleTimeout = 120 * time.Second
 )
 
 // Server represents an HTTP server that can handle requests and responses.
@@ -37,7 +49,11 @@ func NewServer() *Server {
 				"Forwarded",
 			}, false),
 		},
-		httpServer: &http.Server{Handler: mux},
+		httpServer: &http.Server{
+			Handler:           mux,
+			ReadHeaderTimeout: DefaultReadHeaderTimeout,
+			IdleTimeout:       DefaultIdleTimeout,
+		},
 	}
 }
 

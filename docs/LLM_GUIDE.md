@@ -326,6 +326,13 @@ configure it and must be called before `ListenAndServe`. For advanced
 configuration (e.g. `TLSConfig`, `ErrorLog`), reach the underlying server via
 `s.HTTPServer()` before starting.
 
+`NewServer` applies safe defaults so a server is not slowloris-exposed out of
+the box: `ReadHeaderTimeout` (`DefaultReadHeaderTimeout`, 15s) and `IdleTimeout`
+(`DefaultIdleTimeout`, 120s). Both are overridable via the setters (pass `0` to
+disable). `ReadTimeout` and `WriteTimeout` are intentionally left unset — as
+absolute caps on reading/writing the whole body, they break legitimate
+streaming; use per-route stall timeouts instead.
+
 ## Graceful Shutdown
 
 `ListenAndServe` runs on the internal `*http.Server`; `Shutdown(ctx)` drains

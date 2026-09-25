@@ -50,3 +50,18 @@ func (s *stallReader) Read(p []byte) (int, error) {
 func (s *stallReader) Close() error {
 	return s.r.Close()
 }
+
+// stallWriter wraps a response body writer and refreshes the connection write
+// deadline before each Write, so a write fails if the client stops reading for d.
+type stallWriter struct {
+	w  io.Writer
+	rc *http.ResponseController
+	d  time.Duration
+}
+
+func (s *stallWriter) Write(p []byte) (int, error) {
+	if err := s.rc.SetWriteDeadline(time.Now().Add(s.d)); err != nil && !errors.Is(err, http.ErrNotSupported) {
+		return 0, err
+	}
+	return s.w.Write(p)
+}

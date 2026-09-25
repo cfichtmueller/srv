@@ -309,6 +309,26 @@ Apply it per route or group (streaming-read routes), not globally. A non-positiv
 duration disables it. It is built on `ResponseController()`, so on connections that
 don't support read deadlines it degrades to a no-op.
 
+For streaming downloads, use `res.WithWriteStallTimeout(d)` on the response. srv
+resets the connection write deadline before each write to the `BodyFn` writer, so a
+download that stops being read (a dead or stalled client) is cut off after `d` while
+a slow-but-progressing one continues:
+
+```go
+s.GET("/objects/{key}", func(c *srv.Context) *srv.Response {
+    obj := openObject(c.PathValue("key"))
+    return srv.Respond().
+        BodyReader("application/octet-stream", obj).
+        WithWriteStallTimeout(60 * time.Second)
+})
+```
+
+It applies only to streaming bodies (`BodyFn`/`BodyReader`); buffered bodies (`Json`,
+`Html`, `Text`, `Body`) are written in one step and ignore it. Write-side stall
+protection can only be done inside srv, since srv owns the response-writing loop —
+middleware cannot reach the writer, so this lives on `Response` rather than as
+middleware.
+
 ## Server Configuration
 
 Configure the server:

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestGroupPath_CollapsesDoubleSlashAtSeam(t *testing.T) {
@@ -67,4 +68,36 @@ func TestGroupPath_CollapsesDoubleSlashAtSeam(t *testing.T) {
 
 func okHandler(c *Context) *Response {
 	return Respond().Status(http.StatusOK).Text("ok")
+}
+
+func TestNewServer_DefaultTimeouts(t *testing.T) {
+	hs := NewServer().HTTPServer()
+
+	if hs.ReadHeaderTimeout != DefaultReadHeaderTimeout {
+		t.Errorf("ReadHeaderTimeout = %v, want %v", hs.ReadHeaderTimeout, DefaultReadHeaderTimeout)
+	}
+	if hs.IdleTimeout != DefaultIdleTimeout {
+		t.Errorf("IdleTimeout = %v, want %v", hs.IdleTimeout, DefaultIdleTimeout)
+	}
+	// ReadTimeout / WriteTimeout must stay unset: they would break streaming.
+	if hs.ReadTimeout != 0 {
+		t.Errorf("ReadTimeout = %v, want 0", hs.ReadTimeout)
+	}
+	if hs.WriteTimeout != 0 {
+		t.Errorf("WriteTimeout = %v, want 0", hs.WriteTimeout)
+	}
+}
+
+func TestNewServer_TimeoutSettersOverrideDefaults(t *testing.T) {
+	s := NewServer().
+		SetReadHeaderTimeout(3 * time.Second).
+		SetIdleTimeout(0)
+	hs := s.HTTPServer()
+
+	if hs.ReadHeaderTimeout != 3*time.Second {
+		t.Errorf("ReadHeaderTimeout = %v, want 3s", hs.ReadHeaderTimeout)
+	}
+	if hs.IdleTimeout != 0 {
+		t.Errorf("IdleTimeout = %v, want 0 (disabled)", hs.IdleTimeout)
+	}
 }

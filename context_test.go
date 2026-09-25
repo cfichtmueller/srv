@@ -5,9 +5,11 @@
 package srv
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func newTestContext(target string) *Context {
@@ -60,5 +62,44 @@ func TestStringQueryOrDefault_EmptyValueReturnsDefault(t *testing.T) {
 	}
 	if got != "fallback" {
 		t.Errorf("expected %q, got %q", "fallback", got)
+	}
+}
+
+func TestResponseController_NotNilAndWired(t *testing.T) {
+	c := newTestContext("/")
+	rc := c.ResponseController()
+	if rc == nil {
+		t.Fatal("ResponseController() returned nil")
+	}
+	// The recorder implements http.Flusher, so Flush must reach it.
+	if err := rc.Flush(); err != nil {
+		t.Errorf("Flush() error = %v", err)
+	}
+	// The recorder does not support deadlines; the controller must be wired to
+	// it and surface http.ErrNotSupported rather than panicking.
+	if err := rc.SetReadDeadline(time.Now()); !errors.Is(err, http.ErrNotSupported) {
+		t.Errorf("SetReadDeadline() error = %v, want ErrNotSupported", err)
+	}
+}
+
+func TestResponseController_SetReadDeadlineOnRealConn(t *testing.T) {
+	s := NewServer()
+	var deadlineErr error
+	s.GET("/", func(c *Context) *Response {
+		deadlineErr = c.ResponseController().SetReadDeadline(time.Now().Add(time.Minute))
+		return Respond().Text("ok")
+	})
+
+	ts := httptest.NewServer(s.Handler())
+	defer ts.Close()
+
+	res, err := http.Get(ts.URL + "/")
+	if err != nil {
+		t.Fatalf("GET: %v", err)
+	}
+	res.Body.Close()
+
+	if deadlineErr != nil {
+		t.Errorf("SetReadDeadline() on a real connection error = %v, want nil", deadlineErr)
 	}
 }

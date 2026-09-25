@@ -107,6 +107,18 @@ func (c *Context) Request() *http.Request {
 	return c.r
 }
 
+// ResponseController returns an http.ResponseController for the underlying
+// response writer. It gives access to per-connection controls such as
+// SetReadDeadline, SetWriteDeadline and Flush without exposing the writer
+// itself, so handlers can implement stall timeouts on streaming reads while
+// still returning a *Response for the body.
+//
+// The raw http.ResponseWriter is intentionally not exposed: handlers must
+// always return a *Response and must never write to the writer directly.
+func (c *Context) ResponseController() *http.ResponseController {
+	return http.NewResponseController(c.w)
+}
+
 // ClientIP returns the client IP address from the request. When proxies are trusted,
 // the address is resolved from proxy headers like X-Forwarded-For. Otherwise, the
 // direct remote address is used.

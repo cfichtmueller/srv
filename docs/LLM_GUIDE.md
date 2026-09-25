@@ -290,8 +290,55 @@ s := srv.NewServer()
     .SetMaxMultipartMemory(32 << 20) // 32MB
     .SetRemoteIPHeaders("X-Forwarded-For", "X-Real-IP")
     .SetTrustRemoteIdHeaders(true)
+    .SetReadHeaderTimeout(10 * time.Second)
+    .SetReadTimeout(30 * time.Second)
+    .SetWriteTimeout(30 * time.Second)
+    .SetIdleTimeout(60 * time.Second)
     .Use(srv.LoggingMiddleware())
 ```
+
+`srv.Server` wraps an internal `*http.Server`. The `Set*Timeout` setters
+configure it and must be called before `ListenAndServe`. For advanced
+configuration (e.g. `TLSConfig`, `ErrorLog`), reach the underlying server via
+`s.HTTPServer()` before starting.
+
+## Graceful Shutdown
+
+`ListenAndServe` runs on the internal `*http.Server`; `Shutdown(ctx)` drains
+in-flight requests, and `Close()` closes connections immediately. After a
+shutdown, `ListenAndServe` returns `http.ErrServerClosed`, which should be
+treated as a clean exit.
+
+```go
+ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+defer stop()
+
+s := srv.NewServer()
+s.GET("/healthz", func(c *srv.Context) *srv.Response {
+    return srv.Respond().Json(map[string]any{"status": "ok"})
+})
+
+errCh := make(chan error, 1)
+go func() {
+    if err := s.ListenAndServe(":8080"); err != nil && !errors.Is(err, http.ErrServerClosed) {
+        errCh <- err
+    }
+}()
+
+select {
+case err := <-errCh:
+    log.Fatalf("server error: %v", err)
+case <-ctx.Done():
+}
+
+shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+defer cancel()
+if err := s.Shutdown(shutdownCtx); err != nil {
+    log.Fatalf("shutdown error: %v", err)
+}
+```
+
+See `examples/09_graceful_shutdown` for a complete program.
 
 ## Error Handling
 

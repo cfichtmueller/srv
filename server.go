@@ -5,8 +5,10 @@
 package srv
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
 const (
@@ -19,13 +21,15 @@ type Server struct {
 	middleware         []Middleware
 	mux                *http.ServeMux
 	contextConfig      *contextConfig
+	httpServer         *http.Server
 }
 
 // NewServer creates a new Server with a new ServeMux.
 func NewServer() *Server {
+	mux := http.NewServeMux()
 	return &Server{
 		middleware: make([]Middleware, 0),
-		mux:        http.NewServeMux(),
+		mux:        mux,
 		contextConfig: &contextConfig{
 			maxMultipartMemory: DefaultMaxMultipartMemory,
 			ipResolver: NewIPResolver([]string{
@@ -33,6 +37,7 @@ func NewServer() *Server {
 				"Forwarded",
 			}, false),
 		},
+		httpServer: &http.Server{Handler: mux},
 	}
 }
 
@@ -49,6 +54,41 @@ func (s *Server) SetRemoteIPHeaders(headers ...string) *Server {
 func (s *Server) SetTrustRemoteIdHeaders(trust bool) *Server {
 	s.contextConfig.ipResolver.TrustRemoteIdHeaders = trust
 	return s
+}
+
+// SetReadHeaderTimeout sets the ReadHeaderTimeout of the underlying http.Server.
+// It must be called before ListenAndServe.
+func (s *Server) SetReadHeaderTimeout(d time.Duration) *Server {
+	s.httpServer.ReadHeaderTimeout = d
+	return s
+}
+
+// SetReadTimeout sets the ReadTimeout of the underlying http.Server.
+// It must be called before ListenAndServe.
+func (s *Server) SetReadTimeout(d time.Duration) *Server {
+	s.httpServer.ReadTimeout = d
+	return s
+}
+
+// SetWriteTimeout sets the WriteTimeout of the underlying http.Server.
+// It must be called before ListenAndServe.
+func (s *Server) SetWriteTimeout(d time.Duration) *Server {
+	s.httpServer.WriteTimeout = d
+	return s
+}
+
+// SetIdleTimeout sets the IdleTimeout of the underlying http.Server.
+// It must be called before ListenAndServe.
+func (s *Server) SetIdleTimeout(d time.Duration) *Server {
+	s.httpServer.IdleTimeout = d
+	return s
+}
+
+// HTTPServer returns the underlying *http.Server for advanced configuration
+// (e.g. TLSConfig, ErrorLog, ConnState). Mutate it only before ListenAndServe;
+// concurrent mutation while the server is running is unsafe.
+func (s *Server) HTTPServer() *http.Server {
+	return s.httpServer
 }
 
 // Group creates a new Group with the given path.
@@ -134,8 +174,23 @@ func (s *Server) handleMethod(method, path string, handler Handler, middleware [
 }
 
 // ListenAndServe starts the server and listens for incoming requests on the given address.
+// After a call to Shutdown or Close it returns http.ErrServerClosed, which callers should
+// treat as a clean exit.
 func (s *Server) ListenAndServe(address string) error {
-	return http.ListenAndServe(address, s.mux)
+	s.httpServer.Addr = address
+	return s.httpServer.ListenAndServe()
+}
+
+// Shutdown gracefully shuts down the server without interrupting active connections.
+// It waits for in-flight requests to finish or for ctx to expire, whichever comes first.
+func (s *Server) Shutdown(ctx context.Context) error {
+	return s.httpServer.Shutdown(ctx)
+}
+
+// Close immediately closes all active listeners and connections.
+// For a graceful shutdown, use Shutdown instead.
+func (s *Server) Close() error {
+	return s.httpServer.Close()
 }
 
 func (s *Server) Handler() http.Handler {

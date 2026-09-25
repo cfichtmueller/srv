@@ -35,14 +35,15 @@ type BodyFn func(w io.Writer) error
 // Response represents an HTTP response that can be customized with status codes, headers, and body content.
 // It provides a fluent interface for building responses with various common HTTP status codes and payloads.
 type Response struct {
-	StatusCode int
-	headers    http.Header
-	cookies    []*http.Cookie
-	bodyFn     BodyFn
-	jsonBody   any
-	rawBody    []byte
-	afterWrite []func()
-	omitBody   bool
+	StatusCode        int
+	headers           http.Header
+	cookies           []*http.Cookie
+	bodyFn            BodyFn
+	jsonBody          any
+	rawBody           []byte
+	afterWrite        []func()
+	omitBody          bool
+	writeStallTimeout time.Duration
 }
 
 // Respond creates a new Response with default status code 200 OK and empty headers.
@@ -669,6 +670,20 @@ func (r *Response) BodyReader(contentType string, reader io.Reader) *Response {
 	})
 }
 
+// WithWriteStallTimeout aborts a streaming response body that stalls for longer
+// than d. Before each write to the BodyFn writer the connection write deadline is
+// reset to now+d, so a slow-but-progressing download continues while a client that
+// stops reading is cut off after d.
+//
+// It applies only to streaming bodies (BodyFn/BodyReader); buffered bodies (Json,
+// Html, Text, Body) are written in a single step and ignore it. A non-positive d
+// disables it, and it degrades to a no-op on connections that don't support write
+// deadlines.
+func (r *Response) WithWriteStallTimeout(d time.Duration) *Response {
+	r.writeStallTimeout = d
+	return r
+}
+
 // Write writes the response to the http.ResponseWriter.
 // It sets the headers and writes the body to the writer.
 func (r *Response) Write(w http.ResponseWriter) error {
@@ -703,7 +718,15 @@ func (r *Response) Write(w http.ResponseWriter) error {
 	w.WriteHeader(r.StatusCode)
 	if !r.omitBody {
 		if r.bodyFn != nil {
-			return r.bodyFn(w)
+			bw := io.Writer(w)
+			if r.writeStallTimeout > 0 {
+				bw = &stallWriter{
+					w:  w,
+					rc: http.NewResponseController(w),
+					d:  r.writeStallTimeout,
+				}
+			}
+			return r.bodyFn(bw)
 		}
 		if _, err := w.Write(body); err != nil {
 			return err
